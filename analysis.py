@@ -25,7 +25,7 @@ baseUrl = "http://weibo.com"
 allHref = soup.find_all("a", class_="S_txt1", target="_blank")
 member = {}
 datas = []
-#第一页关注的好友
+# 第一页关注的好友
 for href in allHref:
     member["name"] = href.string
     member["url"] = href.get('href')
@@ -36,7 +36,16 @@ pageHref = soup.find_all("a", class_="page")
 pages = list()
 for page in pageHref:
     pages.append(page.text)
-print int(pages[len(pages)-2])
+
+maxPage = int(pages[len(pages) - 2])
+if (maxPage >= 2):
+    basePageUrl = str(pageHref[len(pages) - 2].get("href"))
+    for pageNum in [2, maxPage]:
+        print pageNum
+        result=re.subn("page=(.*)#", pageNum, basePageUrl)
+        print result
+# http://weibo.com/p/1005053043662742/follow?pids=Pl_Official_HisRelation__64&relate=fans&page=2#Pl_Official_HisRelation__64
+# http://weibo.com/2573805580/fans?cfs=600&relate=fans&t=1&f=1&type=&Pl_Official_RelationFans__103_page=2#Pl_Official_RelationFans__103
 
 
 
