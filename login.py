@@ -1,15 +1,19 @@
 # encoding: utf-8
-from  bs4 import BeautifulSoup as bs
+import base64
+import binascii
+import cookielib
+import json
+import re
+import sys
 import urllib
 import urllib2
-import cookielib
-import base64
-import re
-import json
-import hashlib
-import binascii
+
 import rsa
-import sys
+
+import html_downloader
+import html_outputer
+import html_parser
+import url_manager
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -145,5 +149,17 @@ def getUrlData(url):
     return html
 
 
+class SpiderMain(object):
+    def __init__(self):
+        self.urls = url_manager.UrlManager()
+        self.downloader = html_downloader.HtmlDownloader()
+        self.parser = html_parser.HtmlParser()
+        self.outputer = html_outputer.HtmlOutputer()
+
+    def craw(self):
+        return
+
+
 if __name__ == "__main__":
+    obj_spiner = SpiderMain()
     login()
