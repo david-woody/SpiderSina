@@ -106,7 +106,7 @@ class UrlProcesser(object):
         try:
             result = urllib2.urlopen(login_url).read()
             file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-                                'log\\loginResult.htm')
+                                'test\\loginResult.htm')
             fres = open(file, "w")
             fres.write(result)
             fres.close()
@@ -121,6 +121,7 @@ class UrlProcesser(object):
     def getUrlData(self, url):
         req = urllib2.Request(url)
         html = urllib2.urlopen(req).read()
+        print "Get Url", url, "Data........."
         return html
 
     def __init__(self):
@@ -129,13 +130,20 @@ class UrlProcesser(object):
         return
 
     def getUrlsDatas(self, fansUrls):
-        htmls=[]
+        htmls = []
+        count = 2;
         for fanUrl in fansUrls:
             req = urllib2.Request(fanUrl)
             html = urllib2.urlopen(req).read()
-            f_query1 = open(os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-                                'log\\test.htm'), "w")
-            f_query1.write(html)
-            f_query1.close()
+            print "Get Url", fanUrl, "Data........."
             htmls.append(html)
+            userIds = re.findall("com\/(.*)\/fan", fanUrl)
+            if userIds is None or userIds.__len__() == 0:
+                userId = re.findall("p\/(.*)\/follo", fanUrl)[0]
+            else:
+                userId = userIds[0]
+            file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
+                                'tlogs\\' + userId + "_" + str(count) + '_log.html')
+            fres = open(file, "w").write(html)
+            count = count + 1
         return htmls
