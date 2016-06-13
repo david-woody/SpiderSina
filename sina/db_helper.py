@@ -4,7 +4,7 @@ import pymongo
 class DBclient(object):
     def __init__(self):
         self.client = pymongo.MongoClient(host="127.0.0.1", port=27017)
-        self.db = self.client['woody'];
+        self.db = self.client['sina'];
         return
 
     # def get_db(self):
@@ -20,15 +20,24 @@ class DBclient(object):
         coll = self.db.create_collection(name)
         return coll
 
-    def insert_one_doc(self, coll,information):
+    def insert_one_doc(self, coll, information):
         information_id = coll.save(information)
         print information_id
 
-    def insert_multi_docs(db):
-        coll = db['informations']
-        information = [{"name": "xiaoming", "age": "25"}, {"name": "xiaoqiang", "age": "24"}]
-        information_id = coll.insert(information)
+    def insert_multi_docs(self, collections, infos):
+        coll = self.db[collections]
+        information_id = coll.insert(infos)
         print information_id
+
+    def get_user_id(self):
+        coll = self.db["user"]
+        result = coll.find({}, {"id": 1, "_id": 0})
+        return result
+
+    def get_urls(self):
+        coll = self.db["url"]
+        result = coll.find({}, {"_id": 0})
+        return result
 
     def get_one_doc(db):
         coll = db['informations']
@@ -51,9 +60,7 @@ class DBclient(object):
         coll = db['informations']
         for item in coll.find().sort("age", pymongo.DESCENDING):
             print item
-
         count = coll.count()
-
         count = coll.find({"name": "quyang"}).count()
         print "quyang: %s" % count
 
@@ -81,3 +88,6 @@ class DBclient(object):
         #     get_one_by_id(db)
         #     get_many_docs(db)
         # clear_all_datas(db)
+
+    def removeUrl(self,  blog_url):
+        print "Delete", self.db["url"].remove({"url": blog_url})

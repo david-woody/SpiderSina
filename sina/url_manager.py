@@ -1,10 +1,17 @@
 # encoding: utf-8
+from sina import db_helper
+
+
 class UrlManager(object):
     def __init__(self):
         self.BASEURL = "http://weibo.com";
         self.newfansUrl = set()
         self.oldfansUrl = set()
-        self.userId=set()
+        self.userId = set()
+        self.dbhelper = db_helper.DBclient()
+        self.collections=self.dbhelper.get_collection("url")
+        for item in self.dbhelper.get_urls():
+            self.newfansUrl.add(item.__getitem__("url"))
         return
 
     def add_new_url(self, url):
@@ -18,6 +25,9 @@ class UrlManager(object):
             return
         for url in urls:
             self.add_new_url(url)
+            urlDao = {}
+            urlDao["url"] = url
+            self.dbhelper.insert_one_doc(self.collections, urlDao)
 
     def has_new_url(self):
         return len(self.newfansUrl) != 0

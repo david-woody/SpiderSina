@@ -4,12 +4,17 @@ from string import strip
 
 from bs4 import BeautifulSoup
 
+from sina import db_helper
 from sina.dao import blog_dao
 
 
 class HtmlParser(object):
     def __init__(self):
         self.userRecoder = list()
+        self.dbhelper = db_helper.DBclient()
+        self.base_url="http://weibo.com/"
+        for item in self.dbhelper.get_user_id():
+            self.userRecoder.append(item.__getitem__("id"))
         return
 
     def parserFansUrl(self, myHomepage):
@@ -26,7 +31,6 @@ class HtmlParser(object):
         resultHtml = middleware2[0].replace("\\r\\n", "").replace("\\n", "").replace("\\", "")
         soup = BeautifulSoup(resultHtml, "lxml")
         allHref = soup.find_all("a", class_="S_txt1", target="_blank")
-        member = {}
         datas = []
         fanUrls = []
         urls = []
@@ -38,13 +42,20 @@ class HtmlParser(object):
             else:
                 userId = userIds[0]
             if userId not in self.userRecoder:
+                # 过滤掉新手指南
+                if str(href.string).__eq__("新手指南"):
+                    continue
                 self.userRecoder.append(userId)
+                member = {}
                 member["name"] = href.string
+                member["id"] = userId
                 url1 = baseUrl + href.get('href')
                 strinfo = re.compile('refer_flag=(.*)')
                 member["url"] = strinfo.sub("profile_ftype=1&is_all=1#_0", url1)
                 urls.append(member["url"])
                 datas.append(member)
+            else:
+                print "用户已检索!"
         pageHref = soup.find_all("a", class_="page")
         pages = list()
         for page in pageHref:
@@ -61,7 +72,6 @@ class HtmlParser(object):
         return datas, fanUrls, maxPage, urls
 
     def parserFans(self, htmls):
-        member = {}
         dataSet = []
         for html in htmls:
             middleware1 = re.findall("pl\.relation\.fans\.index(.*)", html)
@@ -79,11 +89,19 @@ class HtmlParser(object):
                     userId = re.findall("\/(.*)\?", href.get('href'))[0]
                 else:
                     userId = userIds[0]
-                member["name"] = href.string
-                url1 = baseUrl + href.get('href')
-                strinfo = re.compile('refer_flag=(.*)')
-                member["url"] = strinfo.sub("profile_ftype=1&is_all=1#_0", url1)
-                datas.append(member)
+                if userId not in self.userRecoder:
+                    # 过滤掉新手指南
+                    if str(href.string).__eq__("新手指南"):
+                        continue
+                    self.userRecoder.append(userId)
+                    member["name"] = href.string
+                    url1 = baseUrl + href.get('href')
+                    member["id"] = userId
+                    strinfo = re.compile('refer_flag=(.*)')
+                    member["url"] = strinfo.sub("profile_ftype=1&is_all=1#_0", url1)
+                    datas.append(member)
+                else:
+                    print "用户已检索!"
             if datas is None or len(datas) == 0:
                 print "反垃圾关注规则已过滤"
             else:
@@ -106,7 +124,7 @@ class HtmlParser(object):
         divs = soup.find_all(class_="WB_cardwrap WB_feed_type S_bg2 ")
         # 15条blog记录
         blogs = []
-        count = 2;
+        count = 1;
         for div2 in divs:
             print  "Analysis 第:", count, "条数据"
             blog = blog_dao.BlogDao()
@@ -144,10 +162,17 @@ class HtmlParser(object):
                     blog.forward['repeat_count'] = 0
                 else:
                     blog.forward['repeat_count'] = int(strip(repeatCount[0].next_sibling.text))
-                if strip(praiseCount[0].next_sibling.text).__eq__('赞'):
-                    blog.forward['praise_count'] = 0
+                #淘宝推广会有两个赞标签
+                if len(praiseCount)==1:
+                    if strip(praiseCount[0].next_sibling.text).__eq__('赞'):
+                        blog.forward['praise_count'] = 0
+                    else:
+                        blog.forward['praise_count'] = int(strip(praiseCount[0].next_sibling.text))
                 else:
-                    blog.forward['praise_count'] = int(strip(praiseCount[0].next_sibling.text))
+                    if strip(praiseCount[1].next_sibling.text).__eq__('赞'):
+                        blog.forward['praise_count'] = 0
+                    else:
+                        blog.forward['praise_count'] = int(strip(praiseCount[1].next_sibling.text))
                     # print  10 * " ", strip(forwardCount[0].next_sibling.text), strip(
                     #     repeatCount[0].next_sibling.text), strip(
                     #     praiseCount[0].next_sibling.text)
@@ -187,6 +212,8 @@ class HtmlParser(object):
         url = soup.find_all("span", text="粉丝")[0].find_parent().get("href")
         return url
 
+
+
     def parserOtherFansBase(self, fansHtml):
         middleware1 = re.findall("domid\"\:\"Pl\_Official\_HisRelation\_\_(.*)", fansHtml)
         middleware2 = re.findall("\"html\":\"(.*)\"}\)", middleware1[0])
@@ -205,17 +232,25 @@ class HtmlParser(object):
             else:
                 userId = userIds[0]
             if userId not in self.userRecoder:
+                # 过滤掉新手指南
+                if str(href.string).__eq__("新手指南"):
+                    continue
                 self.userRecoder.append(userId)
                 member["name"] = href.string
                 url1 = baseUrl + href.get('href')
                 strinfo = re.compile('refer_flag=(.*)')
+                member["id"] = userId
                 member["url"] = strinfo.sub("profile_ftype=1&is_all=1#_0", url1)
                 urls.append(member["url"])
                 datas.append(member)
+            else:
+                print "用户已检索!"
         pageHref = soup.find_all("a", class_="page")
         pages = list()
         for page in pageHref:
             pages.append(page.text)
+        if pages.__len__() == 0:
+            return datas, fanUrls, 0, urls
         maxPage = int(pages[len(pages) - 2])
         if (maxPage >= 2):
             basePageUrl = baseUrl + str(pageHref[len(pages) - 2].get("href"))
@@ -229,19 +264,19 @@ class HtmlParser(object):
             basePageUrl = ""
         return datas, fanUrls, maxPage, urls
 
-    def parserOhterFans(self, htmls):
-        member = {}
+    def parserOtherFans(self, htmls):
         dataSet = []
         count = 1;
         for html in htmls:
             print "Analysis Url", count, "Data........."
             middleware1 = re.findall("domid\"\:\"Pl\_Official\_HisRelation\_\_(.*)", html)
-            # print middleware1
+            if middleware1.__len__() == 0:
+                print "反垃圾关注规则已过滤"
+                continue
             middleware2 = re.findall("\"html\":\"(.*)\"}\)", middleware1[0])
             resultHtml = middleware2[0].replace("\\r\\n", "").replace("\\t", "").replace("\\", "")
             soup = BeautifulSoup(resultHtml, "lxml")
             allHref = soup.find_all("a", class_="S_txt1", target="_blank")
-            member = {}
             fanUrls = []
             baseUrl = "http://weibo.com"
             for href in allHref:
@@ -250,11 +285,20 @@ class HtmlParser(object):
                     userId = re.findall("\/(.*)\?", href.get('href'))[0]
                 else:
                     userId = userIds[0]
-                member["name"] = href.string
-                url1 = baseUrl + href.get('href')
-                strinfo = re.compile('refer_flag=(.*)')
-                member["url"] = strinfo.sub("profile_ftype=1&is_all=1#_0", url1)
-                dataSet.append(member)
+                if userId not in self.userRecoder:
+                    # 过滤掉新手指南
+                    if str(href.string).__eq__("新手指南"):
+                        continue
+                    self.userRecoder.append(userId)
+                    member = {}
+                    member["name"] = href.string
+                    url1 = baseUrl + href.get('href')
+                    member["id"] = userId
+                    strinfo = re.compile('refer_flag=(.*)')
+                    member["url"] = strinfo.sub("profile_ftype=1&is_all=1#_0", url1)
+                    dataSet.append(member)
+                else:
+                    print "用户已检索!"
             if dataSet is None or len(dataSet) == 0:
                 print "反垃圾关注规则已过滤"
             count = count + 1
@@ -262,3 +306,18 @@ class HtmlParser(object):
             return
         else:
             return dataSet
+
+    def parserPersonMoreUrl(self, blog_html):
+        middleware1 = re.findall("domid\"\:\"Pl\_Core\_UserInfo(.*)\)\<", blog_html)
+        print middleware1
+        middleware2 = re.findall("\"html\":\"(.*)\"}", middleware1[0])
+        resultHtml = middleware2[0].replace("\\r\\n", "").replace("\\t", "").replace("\\", "")
+        print resultHtml
+        soup = BeautifulSoup(resultHtml, "html.parser")
+        url = soup.find_all("a", class_="WB_cardmore S_txt1 S_line1 clearfix")[0].get("href")
+        htmlUrl = "http://weibo.com/" + url
+        return htmlUrl
+
+
+    def parserPersonMoreData(self, personMoreHtml):
+        return

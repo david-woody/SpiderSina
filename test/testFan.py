@@ -35,8 +35,9 @@ from bs4 import BeautifulSoup
 # import sys
 # reload(sys)
 # sys.setdefaultencoding('utf-8')
-file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)), 'test\\testBlog.htm')
+file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)), 'tlogs/1005055290884850_3_log.html')
 fres = open(file, "r").read()
+print fres
 middleware1 = re.findall("domid\"\:\"Pl\_Core\_T8Cus(.*)\)\<", fres)
 print middleware1
 middleware2 = re.findall("\"html\":\"(.*)\"}", middleware1[0])
