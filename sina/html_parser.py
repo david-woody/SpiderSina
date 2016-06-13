@@ -121,6 +121,9 @@ class HtmlParser(object):
             # print  strip(content[0].text)
             forward = div.find_all(class_="WB_feed_expand")
             if len(forward) != 0:
+                warn = forward[0].find_all(class_="W_icon icon_warnS")
+                if len(warn) != 0:
+                    continue
                 forwardPeople = forward[0].find_all(class_="WB_info")
                 forwardContent = forward[0].find_all(class_="WB_text")
                 forwardTime = forward[0].find_all(class_="WB_from S_txt2")
@@ -229,7 +232,7 @@ class HtmlParser(object):
     def parserOhterFans(self, htmls):
         member = {}
         dataSet = []
-        count = 2;
+        count = 1;
         for html in htmls:
             print "Analysis Url", count, "Data........."
             middleware1 = re.findall("domid\"\:\"Pl\_Official\_HisRelation\_\_(.*)", html)

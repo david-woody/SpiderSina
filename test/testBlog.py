@@ -75,9 +75,9 @@ for div2 in divs:
     print  strip(content[0].text)
     forward = div.find_all(class_="WB_feed_expand")
     if len(forward) != 0:
-        warn=forward[0].find_all(class_="W_icon icon_warnS")
+        warn = forward[0].find_all(class_="W_icon icon_warnS")
         if len(warn) != 0:
-            print  "warn"
+            continue
         forwardPeople = forward[0].find_all(class_="WB_info")
         forwardContent = forward[0].find_all(class_="WB_text")
         forwardTime = forward[0].find_all(class_="WB_from S_txt2")
@@ -113,7 +113,7 @@ for div2 in divs:
     if strip(selfforwardCount[0].next_sibling.text).__eq__('转发'):
         blog.forward_count = 0
     else:
-        blog.forward_count=int(strip(selfforwardCount[0].next_sibling.text))
+        blog.forward_count = int(strip(selfforwardCount[0].next_sibling.text))
     if strip(selfrepeatCount[0].next_sibling.text).__eq__('评论'):
         blog.repeat_count = 0
     else:
@@ -121,13 +121,13 @@ for div2 in divs:
     if strip(selfpraiseCount[0].text).__eq__('赞'):
         blog.praise_count = 0
     else:
-        blog.praise_count= int(strip(selfpraiseCount[0].text))
+        blog.praise_count = int(strip(selfpraiseCount[0].text))
     # print  10 * " ", strip(forwardCount[0].next_sibling.text), strip(repeatCount[0].next_sibling.text), strip(
     #     praiseCount[0].next_sibling.text)
     # print  strip(selfforwardCount[0].next_sibling.text), strip(selfrepeatCount[0].next_sibling.text), strip(
     #     selfpraiseCount[0].text)
     print json.dumps(blog.__dict__)
-    dbhelper.insert_one_doc(dbcollection,blog.__dict__)
+    dbhelper.insert_one_doc(dbcollection, blog.__dict__)
     print  40 * "*"
     # allHref = soup.find_all(class_="WB_text W_f14",attrs={"node-type": "feed_list_content"})
     # for href in allHref:
