@@ -16,3 +16,10 @@ class HtmlOutputer(object):
 
     def saveUserInfo(self, userInfo):
         self.dbhelper.insert_multi_docs('user', userInfo)
+
+    def saveUserDetailInfo(self, userDetailInfo):
+        self.dbhelper.insert_multi_docs('userdetail', userDetailInfo)
+
+
+    def saveUserDetailInfo(self, userDetailInfo):
+        self.dbhelper.insert_one_doc(self.dbhelper.get_collection("userdetail"), userDetailInfo)

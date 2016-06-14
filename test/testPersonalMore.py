@@ -14,6 +14,17 @@ middleware2 = re.findall("\"html\":\"(.*)\"}", middleware1[0])
 resultHtml = middleware2[0].replace("\\r\\n", "").replace("\\t", "").replace("\\", "")
 print resultHtml
 soup=BeautifulSoup(resultHtml,"html.parser")
+
+result=soup.find_all("span",text="昵称：")
+print result[0].next_sibling.text
+result=soup.find_all("span",text="所在地：")
+print result[0].next_sibling.text
+result=soup.find_all("span",text="性别：")
+print result[0].next_sibling.text
+result=soup.find_all("span",text="生日：")
+print result[0].next_sibling.text
+result=soup.find_all("span",text="简介：")
+print result[0].next_sibling.text
 result=soup.find_all("span",text="注册时间：")
 print result[0].next_sibling.text
 

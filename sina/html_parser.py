@@ -1,7 +1,9 @@
 # encoding: utf-8
+import os
 import re
 from string import strip
 
+import time
 from bs4 import BeautifulSoup
 
 from sina import db_helper
@@ -12,7 +14,7 @@ class HtmlParser(object):
     def __init__(self):
         self.userRecoder = list()
         self.dbhelper = db_helper.DBclient()
-        self.base_url="http://weibo.com/"
+        self.base_url = "http://weibo.com/"
         for item in self.dbhelper.get_user_id():
             self.userRecoder.append(item.__getitem__("id"))
         return
@@ -162,8 +164,8 @@ class HtmlParser(object):
                     blog.forward['repeat_count'] = 0
                 else:
                     blog.forward['repeat_count'] = int(strip(repeatCount[0].next_sibling.text))
-                #淘宝推广会有两个赞标签
-                if len(praiseCount)==1:
+                # 淘宝推广会有两个赞标签
+                if len(praiseCount) == 1:
                     if strip(praiseCount[0].next_sibling.text).__eq__('赞'):
                         blog.forward['praise_count'] = 0
                     else:
@@ -173,9 +175,9 @@ class HtmlParser(object):
                         blog.forward['praise_count'] = 0
                     else:
                         blog.forward['praise_count'] = int(strip(praiseCount[1].next_sibling.text))
-                    # print  10 * " ", strip(forwardCount[0].next_sibling.text), strip(
-                    #     repeatCount[0].next_sibling.text), strip(
-                    #     praiseCount[0].next_sibling.text)
+                        # print  10 * " ", strip(forwardCount[0].next_sibling.text), strip(
+                        #     repeatCount[0].next_sibling.text), strip(
+                        #     praiseCount[0].next_sibling.text)
             selfforwardCount = divhandle.find_all(class_="W_ficon ficon_forward S_ficon")
             selfrepeatCount = divhandle.find_all(class_="W_ficon ficon_repeat S_ficon")
             selfpraiseCount = divhandle.find_all(attrs={"action-type": "fl_like"})
@@ -211,8 +213,6 @@ class HtmlParser(object):
         soup = BeautifulSoup(resultHtml, "html.parser")
         url = soup.find_all("span", text="粉丝")[0].find_parent().get("href")
         return url
-
-
 
     def parserOtherFansBase(self, fansHtml):
         middleware1 = re.findall("domid\"\:\"Pl\_Official\_HisRelation\_\_(.*)", fansHtml)
@@ -308,16 +308,49 @@ class HtmlParser(object):
             return dataSet
 
     def parserPersonMoreUrl(self, blog_html):
-        middleware1 = re.findall("domid\"\:\"Pl\_Core\_UserInfo(.*)\)\<", blog_html)
-        print middleware1
-        middleware2 = re.findall("\"html\":\"(.*)\"}", middleware1[0])
-        resultHtml = middleware2[0].replace("\\r\\n", "").replace("\\t", "").replace("\\", "")
-        print resultHtml
-        soup = BeautifulSoup(resultHtml, "html.parser")
-        url = soup.find_all("a", class_="WB_cardmore S_txt1 S_line1 clearfix")[0].get("href")
-        htmlUrl = "http://weibo.com/" + url
+        try:
+            middleware1 = re.findall("domid\"\:\"Pl\_Core\_UserInfo(.*)\)\<", blog_html)
+            middleware2 = re.findall("\"html\":\"(.*)\"}", middleware1[0])
+            resultHtml = middleware2[0].replace("\\r\\n", "").replace("\\t", "").replace("\\", "")
+            soup = BeautifulSoup(resultHtml, "html.parser")
+            url = soup.find_all("a", class_="WB_cardmore S_txt1 S_line1 clearfix")[0].get("href")
+            htmlUrl = "http://weibo.com" + url
+        except Exception, e:
+            file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
+                                'tlogs\\Error_' + int(time.time()) + '_log.html')
+            fres = open(file, "w")
+            fres.write(blog_html)
+            fres.close()
+            print "解析用户URL失败,请查看log日志"
         return htmlUrl
 
-
-    def parserPersonMoreData(self, personMoreHtml):
-        return
+    def parserPersonMoreData(self, personMoreUrl, personMoreHtml):
+        try:
+            middleware1 = re.findall("domid\"\:\"Pl\_Official\_PersonalInfo(.*)\)\<", personMoreHtml)
+            middleware2 = re.findall("\"html\":\"(.*)\"}", middleware1[0])
+            resultHtml = middleware2[0].replace("\\r\\n", "").replace("\\t", "").replace("\\", "")
+            soup = BeautifulSoup(resultHtml, "html.parser")
+            userDetail = {}
+            nickResult = soup.find_all("span", text="昵称：")
+            if len(nickResult) != 0:
+                userDetail["nickname"] = nickResult[0].next_sibling.text
+            sexResult = soup.find_all("span", text="性别：")
+            if len(sexResult) != 0:
+                userDetail["sex"] = sexResult[0].next_sibling.text
+            birthResult = soup.find_all("span", text="生日：")
+            if len(birthResult) != 0:
+                userDetail["birthday"] = birthResult[0].next_sibling.text
+            infoResult = soup.find_all("span", text="简介：")
+            if len(infoResult) != 0:
+                userDetail["info"] = infoResult[0].next_sibling.text
+            registResult = soup.find_all("span", text="注册时间：")
+            if len(registResult) != 0:
+                userDetail["registime"] = registResult[0].next_sibling.text
+        except Exception, e:
+            file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
+                                'tlogs\\Error_' + int(time.time()) + '_log.html')
+            fres = open(file, "w")
+            fres.write(personMoreHtml)
+            fres.close()
+            print "解析用户URL失败,请查看log日志"
+        return userDetail
