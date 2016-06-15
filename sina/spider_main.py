@@ -5,7 +5,6 @@ import re
 
 from sina import url_processor, url_manager, html_parser, html_outputer, user_recorder, db_helper
 
-
 class SpiderMain(object):
     def __init__(self):
         self.urlProcessor = url_processor.UrlProcesser()
