@@ -5,7 +5,7 @@ from string import strip
 import json
 from bs4 import BeautifulSoup
 
-file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)), 'tlogs/5694101701_log.html')
+file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)), 'bugs/5694101701_log.html')
 fres = open(file, "r").read()
 print fres
 middleware1 = re.findall("domid\"\:\"Pl\_Core\_UserInfo(.*)\)\<", fres)

@@ -317,7 +317,7 @@ class HtmlParser(object):
             htmlUrl = "http://weibo.com" + url
         except Exception, e:
             file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-                                'tlogs\\Error_' + int(time.time()) + '_log.html')
+                                'bugs\\Error_' + int(time.time()) + '_log.html')
             fres = open(file, "w")
             fres.write(blog_html)
             fres.close()
@@ -348,9 +348,12 @@ class HtmlParser(object):
                 userDetail["registime"] = registResult[0].next_sibling.text
         except Exception, e:
             file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-                                'tlogs\\Error_' + int(time.time()) + '_log.html')
+                                'bugs\\Error_' + int(time.time()) + '_log.html')
             fres = open(file, "w")
             fres.write(personMoreHtml)
             fres.close()
             print "解析用户URL失败,请查看log日志"
         return userDetail
+
+
+#

@@ -106,7 +106,7 @@ class UrlProcesser(object):
         try:
             result = urllib2.urlopen(login_url).read()
             file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-                                'test\\loginResult.htm')
+                                'logs\\loginResult.htm')
             fres = open(file, "w")
             fres.write(result)
             fres.close()
@@ -143,7 +143,7 @@ class UrlProcesser(object):
             else:
                 userId = userIds[0]
             # file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-            #                     'tlogs\\' + userId + "_" + str(count) + '_log.html')
+            #                     'bugs\\' + userId + "_" + str(count) + '_log.html')
             # fres = open(file, "w").write(html)
             count = count + 1
         return htmls

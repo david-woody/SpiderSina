@@ -55,7 +55,7 @@ blog = {
 }
 dbhelper = db_helper.DBclient()
 dbcollection = dbhelper.get_collection("sina_blog")
-file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)), 'tlogs\\3280269014_log.html')
+file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)), 'bugs\\3280269014_log.html')
 fres = open(file, "r").read()
 print fres
 middleware1 = re.findall("domid\"\:\"Pl\_Official\_MyProfileFeed(.*)\)\<", fres)
