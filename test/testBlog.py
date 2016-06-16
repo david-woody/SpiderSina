@@ -32,7 +32,7 @@ from bs4 import BeautifulSoup
 #     print "true"
 # else:
 #     print  "false"
-import db_helper
+from sina import db_helper
 from sina.dao import blog_dao
 import sys
 

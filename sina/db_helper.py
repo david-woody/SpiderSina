@@ -3,7 +3,7 @@ import pymongo
 
 class DBclient(object):
     def __init__(self):
-        self.client = pymongo.MongoClient(host="127.0.0.1", port=27017)
+        self.client = pymongo.MongoClient(host="123.56.106.132", port=27017)
         self.db = self.client['sina'];
         return
 

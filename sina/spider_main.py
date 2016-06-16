@@ -1,9 +1,7 @@
 # encoding: utf-8
-import os
 
-import re
+from sina import url_processor, url_manager, html_parser, html_outputer, db_helper
 
-from sina import url_processor, url_manager, html_parser, html_outputer, user_recorder, db_helper
 
 class SpiderMain(object):
     def __init__(self):
@@ -46,18 +44,31 @@ if __name__ == "__main__":
             print 30 * "*", "存储粉丝数据结束", 30 * "*"
 
     while spider_object.urlManager.has_new_url():
-        try:            # 爬取用户的博客记录
+        try:  # 爬取用户的博客记录
             blog_url = spider_object.urlManager.get_new_url()
             print 70 * " "
             print 70 * " "
             print 30 * "*", "读取博客数据开始", 30 * "*"
+            # userIds = re.findall("\/u\/(.*)\?", blog_url)
+            # if userIds is None or userIds.__len__() == 0:
+            #     userId = re.findall("m\/(.*)\?", blog_url)[0]
+            # else:
+            #     userId = userIds[0]
             blog_html = spider_object.urlProcessor.getUrlData(blog_url)
-            userIds = re.findall("\/u\/(.*)\?", blog_url)
-            if userIds is None or userIds.__len__() == 0:
-                userId = re.findall("m\/(.*)\?", blog_url)[0]
-            else:
-                userId = userIds[0]
             blogDatas = spider_object.htmlParser.parserBlog(blog_url, blog_html)
+            # 获取博客总数
+            blogCount = spider_object.htmlParser.parserBlogCount(blog_html)
+            blogpage = 1;
+            blogpages = blogCount / 45;
+            # 大于15说明要分页
+            # if blogCount > 15:
+            # http://weibo.com/p/aj/v6/mblog/mbloglist?
+            # ajwvr=6&domain=100606&is_search=0&visible=0&is_all=1&is_tag=0&profile_ftype=1
+            # &page=1&pagebar=0&pl_name=Pl_Official_MyProfileFeed__25
+            # &id=1006062371375560&script_uri=/p/1006062371375560/home&feed_type=0
+            # &pre_page=1&domain_op=100606&__rnd=1465957911461
+            # 获取分页所需要的数据
+
             print 30 * "*", "存储博客数据开始", 30 * "*"
             spider_object.htmlOutPuter.saveblogData(blogDatas)
             # 删除url
@@ -84,15 +95,12 @@ if __name__ == "__main__":
                     print 30 * "*", "存储粉丝数据结束", 30 * "*"
             print 30 * "*", "读取粉丝数据结束", 30 * "*"
             print 30 * "*", "解析用户数据开始", 30 * "*"
-            # # 爬取用户的粉丝数并加入爬取链接
+            # 爬取用户的个人资料网页链接
             personMoreUrl = spider_object.htmlParser.parserPersonMoreUrl(blog_html)
-            # # 进入用户粉丝页面，获得自己的粉丝页面
+            # 爬取用户的个人资料网页
             personMoreHtml = spider_object.urlProcessor.getUrlData(personMoreUrl)
-            # file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-            #                     'bugs\\personnalMore_log.html')
-            # fres = open(file, "w").write(personMoreHtml)
-            # # 进入用户粉丝页面，获得自己的粉丝页面
-            personMoreData = spider_object.htmlParser.parserPersonMoreData(personMoreUrl,personMoreHtml)
+            # 解析用户的个人资料
+            personMoreData = spider_object.htmlParser.parserPersonMoreData(personMoreUrl, personMoreHtml)
             print 30 * "*", "存储用户数据开始", 30 * "*"
             spider_object.htmlOutPuter.saveUserDetailInfo(personMoreData)
             print 30 * "*", "存储用户数据结束", 30 * "*"

@@ -1,9 +1,9 @@
 # encoding: utf-8
 import os
 import re
+import time
 from string import strip
 
-import time
 from bs4 import BeautifulSoup
 
 from sina import db_helper
@@ -196,10 +196,6 @@ class HtmlParser(object):
                 blog.praise_count = 0
             else:
                 blog.praise_count = int(strip(selfpraiseCount[0].text))
-            # print  10 * " ", strip(forwardCount[0].next_sibling.text), strip(repeatCount[0].next_sibling.text), strip(
-            #     praiseCount[0].next_sibling.text)
-            # print  strip(selfforwardCount[0].next_sibling.text), strip(selfrepeatCount[0].next_sibling.text), strip(
-            #     selfpraiseCount[0].text)
             blogs.append(blog)
             count = count + 1
         return blogs
@@ -355,5 +351,14 @@ class HtmlParser(object):
             print "解析用户URL失败,请查看log日志"
         return userDetail
 
+    #
 
-#
+    def parserBlogCount(self, blog_html):
+        middleware1 = re.findall("domid\"\:\"Pl\_Core\_T8Cus(.*)\)\<", blog_html)
+        # print middleware1
+        middleware2 = re.findall("\"html\":\"(.*)\"}", middleware1[0])
+        resultHtml = middleware2[0].replace("\\r\\n", "").replace("\\t", "").replace("\\", "")
+        # print resultHtml
+        soup = BeautifulSoup(resultHtml, "html.parser")
+        count = soup.find_all("span", text="微博")[0].previous_element
+        return count
