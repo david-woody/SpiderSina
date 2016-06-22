@@ -1,14 +1,33 @@
 # encoding: utf-8
+import json
 import os
 import re
 import time
+import urllib
 from string import strip
 
 from bs4 import BeautifulSoup
 
 from sina import db_helper
 from sina.dao import blog_dao
-
+paginationData = {
+    'ajwvr': '6',
+    'domain': '',
+    'is_search': '0',
+    'visible': '0',
+    'is_all': '1',
+    'is_tag': '0',
+    'profile_ftype': '1',
+    'page': '',
+    'pagebar': '',
+    'pl_name': 'Pl_Official_MyProfileFeed__25',
+    'id': '',
+    'script_uri': 'rsa2',
+    'feed_type': '0',
+    'pre_page': '',
+    'domain_op': '',
+    '__rnd': '',
+}
 
 class HtmlParser(object):
     def __init__(self):
@@ -353,7 +372,7 @@ class HtmlParser(object):
 
     #
 
-    def parserBlogCount(self, blog_html):
+    def parserBlogParams(self, blog_html):
         middleware1 = re.findall("domid\"\:\"Pl\_Core\_T8Cus(.*)\)\<", blog_html)
         # print middleware1
         middleware2 = re.findall("\"html\":\"(.*)\"}", middleware1[0])
@@ -361,4 +380,119 @@ class HtmlParser(object):
         # print resultHtml
         soup = BeautifulSoup(resultHtml, "html.parser")
         count = soup.find_all("span", text="微博")[0].previous_element
-        return count
+        domians = re.findall("domain\'\]\=\'(.*)\'\;", blog_html)
+        if len(domians) == 0:
+            exit()
+        domianId = domians[0]
+        print domianId
+        pageIds = re.findall("page\_id\'\]\=\'(.*)\'\;", blog_html)
+        if len(pageIds) == 0:
+            exit()
+        pageId = pageIds[0]
+        print pageId
+        oids = re.findall("oid\'\]\=\'(.*)\'\;", blog_html)
+        if len(oids) == 0:
+            exit()
+        oid = oids[0]
+        print oid
+        return count, domianId, pageId, oid
+
+
+
+
+    def parserFirstPaginationUrl(self, domianId, pageId, oid,pageBar):
+        global paginationData
+        paginationData["domain"] = domianId
+        paginationData["domain_op"] = domianId
+        paginationData["id"] = pageId
+        script_uri = "/u/" + oid
+        paginationData["script_uri"] = script_uri
+        paginationData["pagebar"] = pageBar
+        paginationData["page"] = 1
+        paginationData["pre_page"] = 1
+        timeers = "%d" % (time.time() * 1000)
+        paginationData["__rnd"] = timeers
+        urlData = urllib.urlencode(paginationData)
+        fullUrl = "http://weibo.com/p/aj/v6/mblog/mbloglist?" + urlData
+        print fullUrl
+
+    def parserPaginationData(self,oid, firstPaginationData):
+        s = json.loads(firstPaginationData)
+        print s['data']
+        soup = BeautifulSoup(s['data'], "html.parser")
+        divs = soup.find_all(class_="WB_cardwrap WB_feed_type S_bg2 ")
+         # 15条blog记录
+        blogs = []
+        count = 1;
+        for div2 in divs:
+            print  "Analysis 第:", count, "条数据"
+            blog = blog_dao.BlogDao()
+            blog.user_id = oid;
+            div = div2.find_all(class_="WB_detail")[0]
+            divhandle = div2.find_all(class_="WB_feed_handle")[0]
+            time = div.find_all(class_="WB_from S_txt2")
+            blog.post_from = strip(time[0].text)
+            # print strip(time[0].text)
+            content = div.find_all(class_="WB_text W_f14")
+            blog.post_content = strip(content[0].text)
+            # print  strip(content[0].text)
+            forward = div.find_all(class_="WB_feed_expand")
+            if len(forward) != 0:
+                warn = forward[0].find_all(class_="W_icon icon_warnS")
+                if len(warn) != 0:
+                    continue
+                forwardPeople = forward[0].find_all(class_="WB_info")
+                forwardContent = forward[0].find_all(class_="WB_text")
+                forwardTime = forward[0].find_all(class_="WB_from S_txt2")
+                forwardCount = forward[0].find_all(class_="W_ficon ficon_forward S_ficon")
+                repeatCount = forward[0].find_all(class_="W_ficon ficon_repeat S_ficon")
+                praiseCount = forward[0].find_all(class_=re.compile("praised"))
+                blog.forward['forward_reference'] = strip(forwardPeople[0].text)
+                # print  10 * " ", strip(forwardPeople[0].text)
+                blog.forward['forward_content'] = strip(forwardContent[0].text)
+                # print  10 * " ", strip(forwardContent[0].text)
+                blog.forward['forward_from'] = strip(forwardTime[0].text)
+                # print  10 * " ", strip(forwardTime[0].text)
+                if strip(forwardCount[0].next_sibling.text).__eq__('转发'):
+                    blog.forward['forward_count'] = 0
+                else:
+                    blog.forward['forward_count'] = int(strip(forwardCount[0].next_sibling.text))
+                if strip(repeatCount[0].next_sibling.text).__eq__('评论'):
+                    blog.forward['repeat_count'] = 0
+                else:
+                    blog.forward['repeat_count'] = int(strip(repeatCount[0].next_sibling.text))
+                # 淘宝推广会有两个赞标签
+                if len(praiseCount) == 1:
+                    if strip(praiseCount[0].next_sibling.text).__eq__('赞'):
+                        blog.forward['praise_count'] = 0
+                    else:
+                        blog.forward['praise_count'] = int(strip(praiseCount[0].next_sibling.text))
+                else:
+                    if strip(praiseCount[1].next_sibling.text).__eq__('赞'):
+                        blog.forward['praise_count'] = 0
+                    else:
+                        blog.forward['praise_count'] = int(strip(praiseCount[1].next_sibling.text))
+                        # print  10 * " ", strip(forwardCount[0].next_sibling.text), strip(
+                        #     repeatCount[0].next_sibling.text), strip(
+                        #     praiseCount[0].next_sibling.text)
+            selfforwardCount = divhandle.find_all(class_="W_ficon ficon_forward S_ficon")
+            selfrepeatCount = divhandle.find_all(class_="W_ficon ficon_repeat S_ficon")
+            selfpraiseCount = divhandle.find_all(attrs={"action-type": "fl_like"})
+            # print  40 * " "
+            # print  40 * " "
+            # print  40 * " "
+            if strip(selfforwardCount[0].next_sibling.text).__eq__('转发'):
+                blog.forward_count = 0
+            else:
+                blog.forward_count = int(strip(selfforwardCount[0].next_sibling.text))
+            if strip(selfrepeatCount[0].next_sibling.text).__eq__('评论'):
+                blog.repeat_count = 0
+            else:
+                blog.repeat_count = int(strip(selfrepeatCount[0].next_sibling.text))
+            if strip(selfpraiseCount[0].text).__eq__('赞'):
+                blog.praise_count = 0
+            else:
+                blog.praise_count = int(strip(selfpraiseCount[0].text))
+            blogs.append(blog)
+            count = count + 1
+        return blogs

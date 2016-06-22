@@ -55,13 +55,27 @@ if __name__ == "__main__":
             # else:
             #     userId = userIds[0]
             blog_html = spider_object.urlProcessor.getUrlData(blog_url)
-            blogDatas = spider_object.htmlParser.parserBlog(blog_url, blog_html)
+            allBlogDatas = spider_object.htmlParser.parserBlog(blog_url, blog_html)
             # 获取博客总数
-            blogCount = spider_object.htmlParser.parserBlogCount(blog_html)
-            blogpage = 1;
-            blogpages = blogCount / 45;
+            blogCount, domianId, pageId, oid = spider_object.htmlParser.parserBlogParams(blog_html)
+            if blogCount > 15:
+                print "第一页第一次上滑刷新"
+                firstPaginationUrl = spider_object.htmlParser.parserFirstPaginationUrl(domianId, pageId, oid, 0)
+                firstPaginationData = spider_object.urlProcessor.getUrlData(firstPaginationUrl)
+                blogData = spider_object.htmlParser.parserPaginationData(oid, firstPaginationData)
+                allBlogDatas = allBlogDatas + blogData
+                print ''
+            if blogCount > 30:
+                print "第一页第二次上滑刷新"
+                secondPaginationUrl = spider_object.htmlParser.parserFirstPaginationUrl(domianId, pageId, oid, 1)
+                secondPaginationData = spider_object.urlProcessor.getUrlData(secondPaginationUrl)
+                blogData = spider_object.htmlParser.parserPaginationData(oid, secondPaginationData)
+                allBlogDatas = allBlogDatas + blogData
+                print ""
+            # blogpage = 1;
+            # blogpages = blogCount / 45;
             # 大于15说明要分页
-            # if blogCount > 15:
+
             # http://weibo.com/p/aj/v6/mblog/mbloglist?
             # ajwvr=6&domain=100606&is_search=0&visible=0&is_all=1&is_tag=0&profile_ftype=1
             # &page=1&pagebar=0&pl_name=Pl_Official_MyProfileFeed__25
@@ -70,7 +84,7 @@ if __name__ == "__main__":
             # 获取分页所需要的数据
 
             print 30 * "*", "存储博客数据开始", 30 * "*"
-            spider_object.htmlOutPuter.saveblogData(blogDatas)
+            spider_object.htmlOutPuter.saveblogData(allBlogDatas)
             # 删除url
             spider_object.dbhelper.removeUrl(blog_url)
             print 30 * "*", "存储博客数据结束", 30 * "*"
