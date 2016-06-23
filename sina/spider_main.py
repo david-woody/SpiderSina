@@ -93,7 +93,7 @@ if __name__ == "__main__":
                     # 读取第二次分页
                     secondPaginationUrl = spider_object.htmlParser.parserFirstPaginationUrl(domianId, pageId, oid,
                                                                                             count, 1)
-                    secondPaginationData = spider_object.urlProcessor.getUrlData(firstPaginationUrl)
+                    secondPaginationData = spider_object.urlProcessor.getUrlData(secondPaginationUrl)
                     blogData2 = spider_object.htmlParser.parserPaginationData(oid, secondPaginationData)
                     allBlogDatas = allBlogDatas + blogData2
         # http://weibo.com/p/aj/v6/mblog/mbloglist?
