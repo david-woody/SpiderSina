@@ -98,7 +98,7 @@ if count > 30:
     fullUrl = BASEURL + datas
     print fullUrl
 file = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-                    'test/testfile2')
+                    'test/testfile')
 fres = open(file, "r").read()
 # print fres
 s = json.loads(fres)
@@ -182,11 +182,21 @@ for div2 in divs:
 # print len(blogs)
 
 divs = soup.find(class_="WB_cardwrap S_bg2")
-if divs!=None:
-   pageUrlList= divs.find('ul').find_all("a")
-for url in pageUrlList:
-    print url.get("href")
 # print divs
+urls=[]
+if divs != None:
+    pageUrlList = divs.find('ul').find_all("a")
+    for url in pageUrlList:
+        print url.get("href")
+        url = "http://weibo.com" + url.get("href")
+        newurl = url.replace("pids=Pl_Official_MyProfileFeed__25&", "")
+        if newurl.__contains__("&page=1") != True:
+            urls.append(newurl)
+        else:
+            print "没有其余博客"
+urls.reverse()
+for url in urls:
+    print url
 
 
 # print s.keys()

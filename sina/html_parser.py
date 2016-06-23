@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from sina import db_helper
 from sina.dao import blog_dao
+
 paginationData = {
     'ajwvr': '6',
     'domain': '',
@@ -28,6 +29,7 @@ paginationData = {
     'domain_op': '',
     '__rnd': '',
 }
+
 
 class HtmlParser(object):
     def __init__(self):
@@ -215,6 +217,7 @@ class HtmlParser(object):
                 blog.praise_count = 0
             else:
                 blog.praise_count = int(strip(selfpraiseCount[0].text))
+            print blog.__dict__
             blogs.append(blog)
             count = count + 1
         return blogs
@@ -397,10 +400,7 @@ class HtmlParser(object):
         print oid
         return count, domianId, pageId, oid
 
-
-
-
-    def parserFirstPaginationUrl(self, domianId, pageId, oid,pageBar):
+    def parserFirstPaginationUrl(self, domianId, pageId, oid,page, pageBar):
         global paginationData
         paginationData["domain"] = domianId
         paginationData["domain_op"] = domianId
@@ -408,20 +408,20 @@ class HtmlParser(object):
         script_uri = "/u/" + oid
         paginationData["script_uri"] = script_uri
         paginationData["pagebar"] = pageBar
-        paginationData["page"] = 1
-        paginationData["pre_page"] = 1
+        paginationData["page"] = page
+        paginationData["pre_page"] = page
         timeers = "%d" % (time.time() * 1000)
         paginationData["__rnd"] = timeers
         urlData = urllib.urlencode(paginationData)
         fullUrl = "http://weibo.com/p/aj/v6/mblog/mbloglist?" + urlData
         print fullUrl
+        return fullUrl
 
-    def parserPaginationData(self,oid, firstPaginationData):
+    def parserPaginationData(self, oid, firstPaginationData):
         s = json.loads(firstPaginationData)
-        print s['data']
         soup = BeautifulSoup(s['data'], "html.parser")
         divs = soup.find_all(class_="WB_cardwrap WB_feed_type S_bg2 ")
-         # 15条blog记录
+        # 15条blog记录
         blogs = []
         count = 1;
         for div2 in divs:
@@ -494,5 +494,34 @@ class HtmlParser(object):
             else:
                 blog.praise_count = int(strip(selfpraiseCount[0].text))
             blogs.append(blog)
+            print "分页数据:",blog.__dict__
             count = count + 1
         return blogs
+
+    def parserPageUrls(self, secondPaginationData):
+        s = json.loads(secondPaginationData)
+        soup = BeautifulSoup(s['data'], "html.parser")
+        divs = soup.find(class_="WB_cardwrap S_bg2")
+        urls = []
+        if divs != None:
+            pageUrlList = divs.find('ul').find_all("a")
+            for url in pageUrlList:
+                url = "http://weibo.com" + url.get("href")
+                newurl = url.replace("pids=Pl_Official_MyProfileFeed__25&", "")
+                if newurl.__contains__("&page=1") != True:
+                    urls.append(newurl)
+        else:
+            print "没有其余博客"
+        urls.reverse()
+        for url in urls:
+            print url
+        return urls
+
+    def parserNextPagination(self, resultData):
+         s = json.loads(resultData)
+         soup = BeautifulSoup(s['data'], "html.parser")
+         divs = soup.find(class_="WB_cardwrap S_bg2")
+         if divs!=None:
+             return True
+         else:
+             return False
